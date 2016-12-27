@@ -8,6 +8,9 @@
  * Energy is in joules.
  * Force is in newtons.
  * Spring constants are in newtons per meter.
+ *
+ * Full rigid-body mechanics with tensors and rotational inertia and everything
+ * http://www.mare.ee/indrek/varphi/vardyn.pdf
  */
 
 function toString(obj) {
@@ -64,6 +67,63 @@ function extend(base,additional) {
         r[key] = additional[key];
     }
     return r;
+}
+
+/*
+ * * * * * * * * * * * * * * VECTORS IN 3-SPACE * * * * * * * * * * * * * *
+ */
+
+var vector2Prototype = {
+    _toString: function() {
+        return "(" + this.x + " " + this.y + " " + ")";
+    },
+    copy: function(other) {
+        return Vector2(this.x, this.y);
+    },
+    add: function(other) {
+        return Vector2(this.x + other.x,
+                       this.y + other.y);
+    },
+    subtract: function(other) {
+        return Vector2(this.x - other.x,
+                       this.y - other.y);
+    },
+    negate: function() {
+        return Vector2(-this.x, -this.y);
+    },
+    scale: function(factor) {
+        return Vector2(this.x * factor,
+                       this.y * factor);
+    },
+    normalize: function(factor) {
+        return this.scale(1.0 / this.length());
+    },
+    dotProduct: function(other) {
+        return this.x * other.x + this.y * other.y;
+    },
+    distsq: function(other) {
+        var dx = this.x - other.x;
+        var dy = this.y - other.y;
+        return dx * dx + dy * dy;
+    },
+    lensq: function() {
+        var x = this.x;
+        var y = this.y;
+        return x * x + y * y;
+    },
+    length: function() {
+        return Math.sqrt(this.lensq());
+    }
+};
+
+function vector2Constructor() { }
+vector2Constructor.prototype = vector2Prototype;
+
+function Vector2(x, y) {
+    inst = new vector2Constructor();
+    inst.x = (x === undefined) ? x : 0.0;
+    inst.y = (y === undefined) ? y : 0.0;
+    return inst;
 }
 
 /*
@@ -133,9 +193,9 @@ vectorConstructor.prototype = vectorPrototype;
 
 function Vector(x,y,z) {
     inst = new vectorConstructor();
-    inst.x = x;
-    inst.y = y;
-    inst.z = z;
+    inst.x = (x === undefined) ? x : 0.0;
+    inst.y = (y === undefined) ? y : 0.0;
+    inst.z = (z === undefined) ? z : 0.0;
     return inst;
 }
 
@@ -236,8 +296,14 @@ var massPrototype = {
         return "(Mass " + this.getPosition() + ")";
     },
 
-    init: function() {
-        // default behavior is to do nothing
+    init: function(coords) {
+        if (coords === 2) {
+            this._vector = Vector2;
+        } else {
+            this._vector = Vector;
+        }
+        this._state = [];
+        this._past_states = [];
     },
 
     setMass: function(m) {
@@ -248,12 +314,28 @@ var massPrototype = {
         return this._mass;
     },
 
+    // state is two vectors, momentum and position
+    // momentum divided by mass gives velocity
+    // applied force is the rate of change of momentum
+    getState: function() {
+        return this._state;
+    },
+
+
     setPosition: function(v) {
         this._position = v;
     },
 
     getPosition: function() {
         return this._position;
+    },
+
+    shiftPositions: function() {
+        // only call this function once per simulation time step
+        if (this._position) {
+            this._past_positions = this._past_positions.slice(1, 4);
+            this._past_positions.push(this._position);
+        }
     },
 
     move: function(v) {
@@ -282,12 +364,13 @@ var massPrototype = {
         this._force = Vector(0, 0, 0);
     },
 
-    setPreviousPosition: function(v) {
-        this._previous = v;
+    getPreviousPositions: function() {
+        return this._past_positions;
     },
 
-    getPreviousPosition: function(v) {
-        return this._previous;
+    getPreviousPosition: function() {
+        var pp = this._past_positions;
+        return pp[pp.length - 1];
     },
 
     verletStep: function(dt, dampingCoeff) {
