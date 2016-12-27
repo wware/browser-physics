@@ -1,0 +1,78 @@
+<html>
+  <head>
+    <script src="mechanics.js" type="text/javascript"></script>
+    <script type="text/javascript">
+
+        // In Chrome or Firefox, open up the developer tools and load this page.
+        // If any tests fail, you will be put into the Javascript debugger where
+        // you can see which test failed and why.
+
+        function prettyClose(x, y) {
+            var z = x - y;
+            if (z < 0) z = -z;
+            if (z > 1.0e-6) {
+                debugger;
+            }
+        }
+
+        function equal(x, y) {
+            if (x != y) {
+                debugger;
+            }
+        }
+
+        // compare two vectors, works for both Java and JavaScript
+        function vmatch(u, v) {
+            prettyClose(u.x, v.x);
+            prettyClose(u.y, v.y);
+            prettyClose(u.z, v.z);
+        }
+
+        // compare two quaternions, works for both Java and JavaScript
+        function qmatch(q1, q2) {
+            prettyClose(q1.getReal(), q2.getReal());
+            vmatch(q1.getImaginary(), q2.getImaginary());
+        }
+
+        function testVector() {
+            var v = Vector(1.2, -0.3, 0.78);
+            prettyClose(v.length(), 1.4623269);
+            prettyClose(v.lensq(), 2.1384);
+            prettyClose(v.dotProduct(v), 2.1384);
+            vmatch(v.negate(), Vector(-1.2, 0.3, -0.78));
+            vmatch(v.scale(5), Vector(6, -1.5, 3.9));
+            vmatch(v.crossProduct(Vector(2, 3, 5)), Vector(-3.84, -4.44, 4.2));
+            prettyClose(v.dotProduct(Vector(2, 3, 5)), 5.4);
+            prettyClose(v.distsq(Vector(2, 3, 5)), 29.3384);
+        }
+
+        function testQuaternion() {
+            var v = Vector(1.2, -0.3, 0.78);
+            var q1 = Quaternion(1, Vector(2, 3, 4));
+            var q2 = Quaternion(3, Vector(-4, 0, 5));
+            qmatch(q1.add(q2), Quaternion(4, Vector(-2, 3, 9)));
+            qmatch(q1.subtract(q2), Quaternion(-2, Vector(6, 3, -1)));
+            qmatch(q1.multiply(q2), Quaternion(-9, Vector(17, -17, 29)));
+            qmatch(q1.divide(q2), Quaternion(0.3, Vector(-0.1, 0.7, -0.1)));
+            qmatch(q1.inverse(), Quaternion(0.033333, Vector(-0.0666667, -0.1, -0.1333333)));
+            qmatch(q1.multiply(q1.inverse()), Quaternion(1, Vector(0, 0, 0)));
+            qmatch(q1.add(q1.negate()), Quaternion(0, Vector(0, 0, 0)));
+            qmatch(q1.scale(5), Quaternion(5, Vector(10, 15, 20)));
+            prettyClose(q1.absoluteValue(), 5.4772255);
+            qmatch(q1.multiplyVector(v), Quaternion(-4.62, Vector(4.74, 2.94, -3.42)));
+            vmatch(q1.rotate(v), Vector(-0.268, 1.42, 0.224));
+            qmatch(q1.normalize(), Quaternion(0.182574, Vector(0.365148, 0.547722, 0.7302967)));
+            qmatch(v.multiplyQuaternion(q1), Quaternion(-4.62, Vector(-2.34, -3.54, 4.98)));
+        }
+
+        function testMass() {
+            // no tests yet
+        }
+
+        testVector();
+        testQuaternion();
+        testMass();
+
+    </script>
+  </head>
+</html>
