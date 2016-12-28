@@ -121,8 +121,8 @@ vector2Constructor.prototype = vector2Prototype;
 
 function Vector2(x, y) {
     inst = new vector2Constructor();
-    inst.x = (x === undefined) ? x : 0.0;
-    inst.y = (y === undefined) ? y : 0.0;
+    inst.x = (x === undefined) ? 0.0 : x;
+    inst.y = (y === undefined) ? 0.0 : y;
     return inst;
 }
 
@@ -193,9 +193,9 @@ vectorConstructor.prototype = vectorPrototype;
 
 function Vector(x,y,z) {
     inst = new vectorConstructor();
-    inst.x = (x === undefined) ? x : 0.0;
-    inst.y = (y === undefined) ? y : 0.0;
-    inst.z = (z === undefined) ? z : 0.0;
+    inst.x = (x === undefined) ? 0.0 : x;
+    inst.y = (y === undefined) ? 0.0 : y;
+    inst.z = (z === undefined) ? 0.0 : z;
     return inst;
 }
 
@@ -269,7 +269,7 @@ var quaternionPrototype = {
     }
 };
 
-function Quaternion(re,im) {
+function Quaternion(re, im) {
     function q() {
         this.getReal = function() {
             return re;
@@ -291,13 +291,13 @@ function makeRotator(theta, axis) {
  * * * * * * * * * * * * * * MASS * * * * * * * * * * * * * *
  */
 
-var massPrototype = {
+var pointMassPrototype = {
     _toString: function() {
         return "(Mass " + this.getPosition() + ")";
     },
 
-    init: function(coords) {
-        if (coords === 2) {
+    init: function(dimensions) {
+        if (dimensions === 2) {
             this._vector = Vector2;
         } else {
             this._vector = Vector;
@@ -319,11 +319,6 @@ var massPrototype = {
     // applied force is the rate of change of momentum
     getState: function() {
         return this._state;
-    },
-
-
-    setPosition: function(v) {
-        this._position = v;
     },
 
     getPosition: function() {
@@ -396,3 +391,19 @@ var massPrototype = {
         return 0.5 * this.getMass() * (dx*dx + dy*dy + dz*dz) / (dt*dt);
     }
 };
+
+function pointMassConstructor() { }
+pointMassConstructor.prototype = pointMassPrototype;
+
+function PointMass(m, pos, dimensions) {
+    inst = new pointMassConstructor();
+    inst._mass = (m === undefined) ? 0.0 : m;
+    inst._position = (pos === undefined) ? 0.0 : pos;
+    return inst;
+}
+
+
+/*
+ * Future stuff: spring (two points in space, spring constant)
+ * Points might be anchored to point masses.
+ */
