@@ -191,12 +191,22 @@ var vectorPrototype = {
 function vectorConstructor() { }
 vectorConstructor.prototype = vectorPrototype;
 
-function Vector(x,y,z) {
+function Vector3(x,y,z) {
     inst = new vectorConstructor();
     inst.x = (x === undefined) ? 0.0 : x;
     inst.y = (y === undefined) ? 0.0 : y;
     inst.z = (z === undefined) ? 0.0 : z;
     return inst;
+}
+
+/*
+ * * * * * * * * * * * * * * TWO DIMENSIONS OR THREE? * * * * * * * * * * * * * *
+ */
+
+var Vector = Vector2;  // browser graphics is typically 2d
+
+function three_dimensions() {
+    Vector = Vector3;
 }
 
 /*
@@ -297,11 +307,6 @@ var pointMassPrototype = {
     },
 
     init: function(dimensions) {
-        if (dimensions === 2) {
-            this._vector = Vector2;
-        } else {
-            this._vector = Vector;
-        }
         this._state = [];
         this._past_states = [];
     },
@@ -343,6 +348,18 @@ var pointMassPrototype = {
 
     getForce: function() {
         return this._force;
+    },
+
+    color: function() {
+        return '#08F';
+    },
+
+    draw: function(context) {
+        var size = 20;
+        var x = this._position[0].x + context.center.x - size / 2;
+        var y = this._position[0].y + context.center.y - size / 2;
+        context.fillStyle = this.color();
+        context.fillRect(x, y, size, size);
     },
 
     addForce: function(v) {
